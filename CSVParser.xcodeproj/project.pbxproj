@@ -81,10 +81,10 @@
 		461A60E92CA6BBCB00A39DAB /* CSVParser */ = {
 			isa = PBXGroup;
 			children = (
+				46F85FF32CAAB3CC00778671 /* Resources */,
 				46F85FF02CA9B73800778671 /* ReusableViews */,
 				46F85FEE2CA9B64200778671 /* Entities */,
 				46F85FED2CA9B63100778671 /* CSVView */,
-				461A60FA2CA6CC8000A39DAB /* issues.csv */,
 				461A60EA2CA6BBCB00A39DAB /* CSVParserApp.swift */,
 				461A60EE2CA6BBCE00A39DAB /* Assets.xcassets */,
 				461A60F02CA6BBCE00A39DAB /* Preview Content */,
@@ -131,6 +131,14 @@
 				46F85FF12CA9B74A00778671 /* ActionButtonView.swift */,
 			);
 			path = ReusableViews;
+			sourceTree = "<group>";
+		};
+		46F85FF32CAAB3CC00778671 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				461A60FA2CA6CC8000A39DAB /* issues.csv */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
