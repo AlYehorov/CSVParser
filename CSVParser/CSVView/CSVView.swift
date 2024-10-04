@@ -8,19 +8,22 @@
 import SwiftUI
 
 struct CSVView: View {
-    var viewModel: FileProtocol
+    @State private var viewModel = CSVViewModel() // Using StateObject for the view model
     @State private var isPickerViewPresented = false
-    
+
     var body: some View {
         NavigationStack {
             VStack {
                 if let error = viewModel.error {
                     Text(error).foregroundColor(.red)
+                } else if viewModel.isLoading {
+                    ProgressView("Loading...") // Show a loading indicator while the CSV is loading
                 } else {
                     ScrollView([.horizontal, .vertical]) {
                         LazyVGrid(
                             columns: Array(repeating: GridItem(.adaptive(minimum: 120)), count: viewModel.columsCount),
-                            spacing: 10) {
+                            spacing: 10
+                        ) {
                             ForEach(viewModel.getCSVRows(), id: \.id) { row in
                                 ForEach(Array(row.columns.enumerated()), id: \.0) { index, column in
                                     Text(column)
@@ -34,27 +37,26 @@ struct CSVView: View {
                         }
                         .padding([.leading, .trailing, .top, .bottom], 16)
                     }
-                    ActionButtonView(action: {
-                        isPickerViewPresented = true
-                    }, buttonText: "Load CSV")
-                    .padding()
-                    .fileImporter(isPresented: $isPickerViewPresented, allowedContentTypes: [.commaSeparatedText], onCompletion: { result in
-                        switch result {
-                        case .success(let url):
-                            if url.startAccessingSecurityScopedResource() {
-                                viewModel.loadCSV(from: url)
-                            }
-                        case .failure(let failure):
-                            print(failure)
-                        }
-                    })
+                }
+                ActionButtonView(action: {
+                    isPickerViewPresented = true
+                }, buttonText: "Load CSV")
+                .padding(.bottom, 40)
+                .fileImporter(isPresented: $isPickerViewPresented, allowedContentTypes: [.commaSeparatedText]) { result in
+                    switch result {
+                    case .success(let url):
+                        viewModel.loadCSV(from: url)
+                    case .failure(let failure):
+                        print("Failed to load file: \(failure.localizedDescription)")
+                    }
                 }
             }
             .navigationTitle("CSV Viewer")
+            .padding()
         }
     }
 }
 
 #Preview {
-    CSVView(viewModel: CSVViewModel())
+    CSVView()
 }
