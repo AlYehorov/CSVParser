@@ -9,11 +9,11 @@ import Foundation
 import Combine
 
 protocol PaginationProtocol {
-    func loadNextPage()
+    func loadNextPage() async throws
 }
 
 protocol CSVParserProtocol {
-    func loadCSV(from url: URL)
+    func loadCSV(from url: URL) async throws
     func parseCSV(_ content: String) -> [CSVRow]
     func getCSVRows() -> [CSVRow]
     
@@ -21,85 +21,76 @@ protocol CSVParserProtocol {
     var columsCount: Int { get }
 }
 
+enum CSVServiceError: Error {
+    case fileNotFound
+    case readError(String)
+}
+
 typealias FileProtocol = CSVParserProtocol & PaginationProtocol
 
 @Observable
 class CSVService: FileProtocol {
-    
-    // MARK: - Observable Properties
-    var rows: [CSVRow] = []
-    var isLoading: Bool = false
-    var errorMessage: String? = nil
-
+    private var rows: [CSVRow] = []
+    private var errorMessage: String?
     private var fileHandle: FileHandle?
-    private let chunkSize = 1_024 * 1_024 // Define the size of each chunk in bytes
-    private var remainingData = Data() // Store incomplete row data from chunk
     private var endOfFile = false
-
-    // MARK: - Computed Properties
+    var isLoading: Bool = false
+    
     var error: String? {
-        return errorMessage
+        errorMessage
     }
     
     var columsCount: Int {
-        return rows.first?.columns.count ?? 0
+        rows.first?.columns.count ?? 0
     }
-    
+
     // MARK: - Load CSV
-    func loadCSV(from url: URL) {
+    
+    func loadCSV(from url: URL) async throws {
         clearAllData()
-        
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                self.fileHandle = try FileHandle(forReadingFrom: url)
-                self.loadNextPage()
-            } catch {
-                DispatchQueue.main.async {
-                    self.errorMessage = "Failed to load file: \(error.localizedDescription)"
-                }
+        do {
+            // Ensure the file exists at the specified URL
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                throw CSVServiceError.fileNotFound
             }
+            
+            fileHandle = try FileHandle(forReadingFrom: url)
+            try await loadNextPage() // Call loadNextPage as an async method
+        } catch {
+            throw CSVServiceError.readError(error.localizedDescription)
         }
     }
-    
-    func loadNextPage() {
+
+    func loadNextPage() async throws {
         guard !isLoading, !endOfFile else { return }
-        
         isLoading = true
-        DispatchQueue.global(qos: .userInitiated).async {
-            let chunk = self.fileHandle?.readData(ofLength: self.chunkSize) ?? Data()
-            
-            if chunk.isEmpty {
-                self.endOfFile = true
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                }
-                return
-            }
-            
-            self.remainingData.append(chunk)
-            if let chunkString = String(data: self.remainingData, encoding: .utf8) {
-                let rowsData = chunkString.components(separatedBy: "\n")
-                
-                // Handle incomplete row data for the next chunk
-                if let lastLine = rowsData.last, !lastLine.hasSuffix("\n") {
-                    self.remainingData = Data(lastLine.utf8) // Keep incomplete line for next chunk
-                } else {
-                    self.remainingData = Data()
-                }
-                
-                let parsedRows = self.parseCSV(chunkString)
-                
-                DispatchQueue.main.async {
-                    self.rows.append(contentsOf: parsedRows)
-                    self.isLoading = false
-                }
-            }
+        
+        guard let fileHandle = self.fileHandle else {
+            throw CSVServiceError.fileNotFound
+        }
+        
+        let chunkSize = 1_024 * 1_024 // Size of each chunk in bytes
+        let chunk = fileHandle.readData(ofLength: chunkSize)
+        
+        if chunk.isEmpty {
+            endOfFile = true
+            isLoading = false
+            return
+        }
+        
+        let chunkString = String(data: chunk, encoding: .utf8) ?? ""
+        let parsedRows = parseCSV(chunkString)
+
+        DispatchQueue.main.async {
+            self.rows.append(contentsOf: parsedRows)
+            self.isLoading = false
         }
     }
-    
+
     // MARK: - Parse CSV
+
     func parseCSV(_ content: String) -> [CSVRow] {
-        var parsedRows: [CSVRow] = []
+        var rows: [CSVRow] = []
         let lines = content.components(separatedBy: "\n")
         
         let regex = try! NSRegularExpression(pattern: #"(?:(?<=^)|(?<=,))(?:"([^"]*)"|([^,]*))(?=,|$)"#)
@@ -122,11 +113,11 @@ class CSVService: FileProtocol {
             }
             
             if !columns.isEmpty {
-                parsedRows.append(CSVRow(columns: columns))
+                rows.append(CSVRow(columns: columns))
             }
         }
         
-        return parsedRows
+        return rows
     }
     
     func getCSVRows() -> [CSVRow] {
@@ -134,11 +125,10 @@ class CSVService: FileProtocol {
     }
     
     // MARK: - Clear Data
-    
+
     private func clearAllData() {
         endOfFile = false
         rows.removeAll()
-        remainingData = Data()
         fileHandle = nil
     }
 }

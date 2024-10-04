@@ -11,54 +11,52 @@ import Combine
 // Model that interacts with CSVService
 @Observable
 class CSVModel {
-    private let service: CSVService
+    private var csvService = CSVService()
+    private var errorMessage: String?
     
-    // Observable properties that reflect the state of the service
-    var rows: [CSVRow] = []
-    var isLoading: Bool = false
-    var error: String? = nil
-    
-    init(service: CSVService = CSVService()) {
-        self.service = service
-        setupBindings()
+    var error: String? {
+        errorMessage ?? csvService.error
+    }
+
+    var columsCount: Int {
+        csvService.columsCount
     }
     
-    // Bind service properties to the model's observable properties
-    private func setupBindings() {
-        // The service's rows will update the model's rows
-        self.rows = service.rows
-        self.isLoading = service.isLoading
-        self.error = service.errorMessage
+    var isLoading: Bool {
+        csvService.isLoading
     }
-    
-    // Load CSV from a URL
+
+    // MARK: - Load CSV
+
     func loadCSV(from url: URL) {
-        service.loadCSV(from: url)
-        // Reflect the service's state in the model
-        updateModelState()
+        Task {
+            await loadCSVAsync(from: url)
+        }
     }
-    
-    // Load the next page (for pagination)
-    func loadNextPage() {
-        service.loadNextPage()
-        // Reflect the service's state in the model
-        updateModelState()
+
+    private func loadCSVAsync(from url: URL) async {
+        guard url.startAccessingSecurityScopedResource() else {
+            DispatchQueue.main.async {
+                self.errorMessage = "Failed to access the file."
+            }
+            return
+        }
+        
+        defer {
+            url.stopAccessingSecurityScopedResource()
+        }
+
+        do {
+            try await csvService.loadCSV(from: url)
+        } catch {
+            // Handle any error that might occur while loading
+            DispatchQueue.main.async {
+                self.errorMessage = "Failed to load file: \(error.localizedDescription)"
+            }
+        }
     }
-    
-    // Get the current rows (for easier access)
+
     func getCSVRows() -> [CSVRow] {
-        return service.getCSVRows()
-    }
-    
-    // Get column count (for easier access)
-    var columnsCount: Int {
-        return service.columsCount
-    }
-    
-    // Update the observable state
-    private func updateModelState() {
-        self.rows = service.rows
-        self.isLoading = service.isLoading
-        self.error = service.errorMessage
+        return csvService.getCSVRows()
     }
 }

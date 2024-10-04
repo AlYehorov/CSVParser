@@ -11,7 +11,7 @@ import SwiftUI
 struct CSVParserApp: App {
     var body: some Scene {
         WindowGroup {
-            CSVView(viewModel: CSVViewModel())
+            CSVView()
                 .preferredColorScheme(.light)
         }
     }

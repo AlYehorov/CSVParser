@@ -33,6 +33,7 @@
 /* Begin PBXFileReference section */
 		460EE9892CB05C2B00A227F0 /* CSVService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVService.swift; sourceTree = "<group>"; };
 		460EE98B2CB05CBC00A227F0 /* CSVModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVModel.swift; sourceTree = "<group>"; };
+		460EE98D2CB06ECA00A227F0 /* CSVParser.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CSVParser.entitlements; sourceTree = "<group>"; };
 		461A60E72CA6BBCB00A39DAB /* CSVParser.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CSVParser.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		461A60EA2CA6BBCB00A39DAB /* CSVParserApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVParserApp.swift; sourceTree = "<group>"; };
 		461A60EC2CA6BBCB00A39DAB /* CSVView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVView.swift; sourceTree = "<group>"; };
@@ -93,6 +94,7 @@
 		461A60E92CA6BBCB00A39DAB /* CSVParser */ = {
 			isa = PBXGroup;
 			children = (
+				460EE98D2CB06ECA00A227F0 /* CSVParser.entitlements */,
 				460EE9882CB05BC100A227F0 /* Services */,
 				46F85FF32CAAB3CC00778671 /* Resources */,
 				46F85FF02CA9B73800778671 /* ReusableViews */,
@@ -409,6 +411,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = CSVParser/CSVParser.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"CSVParser/Preview Content\"";
@@ -438,6 +441,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = CSVParser/CSVParser.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"CSVParser/Preview Content\"";
