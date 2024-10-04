@@ -41,32 +41,56 @@ final class CSVServiceTests: XCTestCase {
         XCTAssertEqual(parsedRows[0].columns[1], "Yehorov")
     }
     
-    func testLoadCSV_InvalidURL() {
-        let invalidURL = URL(fileURLWithPath: "/invalid/path")
-        csvService.loadCSV(from: invalidURL)
-        
-        let expectation = self.expectation(description: "Loading CSV")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            XCTAssertNotNil(self.csvService.error)
-            expectation.fulfill()
+    func testLoadCSV_ValidData_UpdatesMainThread() async {
+        guard let url = Bundle.main.url(forResource: "issues", withExtension: "csv") else {
+            XCTFail("Valid CSV file not found.")
+            return
         }
         
-        waitForExpectations(timeout: 2)
-    }
-    
-    func testLoadCSV_ValidData_UpdatesMainThread() {
-        if let url = Bundle.main.url(forResource: "issues", withExtension: "csv") {
-            csvService.loadCSV(from: url)
+        do {
+            try await csvService.loadCSV(from: url)
             
+            // Expectation for loading the CSV
             let expectation = self.expectation(description: "Loading CSV")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                XCTAssertEqual(self.csvService.getCSVRows().count, 4)
-                expectation.fulfill()
+            
+            do {
+                try await Task.sleep(nanoseconds: 1_000_000_000)
+            } catch {
+                XCTFail("Sleep interrupted with error: \(error.localizedDescription)")
             }
             
-            waitForExpectations(timeout: 2)
-        } else {
-            XCTAssertTrue(false)
+            // Validate the number of rows
+            XCTAssertEqual(csvService.getCSVRows().count, 4)
+            expectation.fulfill()
+            
+            await fulfillment(of: [expectation], timeout: 2)
+        } catch {
+            // If an error occurs, fail the test
+            XCTFail("Failed to load CSV: \(error.localizedDescription)")
         }
     }
+    
+    func testLoadCSV_InvalidURL() async {
+        let invalidURL = URL(fileURLWithPath: "/invalid/path")
+        
+        do {
+            try await csvService.loadCSV(from: invalidURL)
+            
+            // If the function completes successfully, the test should fail
+            XCTFail("Expected loadCSV to throw an error for invalid URL")
+        } catch {
+            let expectation = self.expectation(description: "Loading CSV")
+            do {
+                try await Task.sleep(nanoseconds: 1_000_000_000) // Wait for 1 second
+            } catch {
+                XCTFail("Sleep interrupted with error: \(error.localizedDescription)")
+            }
+            XCTAssertNotNil(csvService.error)
+            expectation.fulfill()
+            
+            // Wait for the expectation to be fulfilled
+            await fulfillment(of: [expectation], timeout: 2)
+        }
+    }
+
 }

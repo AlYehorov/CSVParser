@@ -51,6 +51,7 @@ class CSVService: FileProtocol {
         do {
             // Ensure the file exists at the specified URL
             guard FileManager.default.fileExists(atPath: url.path) else {
+                errorMessage = "File not found"
                 throw CSVServiceError.fileNotFound
             }
             
