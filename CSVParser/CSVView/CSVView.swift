@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CSVView: View {
-    @State private var viewModel = CSVViewModel() // Using StateObject for the view model
+    @State private var viewModel = CSVViewModel()
     @State private var isPickerViewPresented = false
 
     var body: some View {
