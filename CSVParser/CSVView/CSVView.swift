@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct CSVView: View {
-    var viewModel: FileProtocol
+    @State var viewModel = CSVViewModel() // Use the CSVViewModel
     @State private var isPickerViewPresented = false
-    
+
     var body: some View {
         NavigationStack {
             VStack {
@@ -19,9 +19,10 @@ struct CSVView: View {
                 } else {
                     ScrollView([.horizontal, .vertical]) {
                         LazyVGrid(
-                            columns: Array(repeating: GridItem(.adaptive(minimum: 120)), count: viewModel.columsCount),
-                            spacing: 10) {
-                            ForEach(viewModel.getCSVRows(), id: \.id) { row in
+                            columns: Array(repeating: GridItem(.adaptive(minimum: 120)), count: viewModel.columnsCount), // Bind to viewModel's columnsCount
+                            spacing: 10
+                        ) {
+                            ForEach(viewModel.rows, id: \.id) { row in // Bind to viewModel's rows
                                 ForEach(Array(row.columns.enumerated()), id: \.0) { index, column in
                                     Text(column)
                                         .padding(10)
@@ -42,7 +43,8 @@ struct CSVView: View {
                         switch result {
                         case .success(let url):
                             if url.startAccessingSecurityScopedResource() {
-                                viewModel.loadCSV(from: url)
+                                viewModel.loadCSV(from: url) // Use viewModel's loadCSV method
+                                url.stopAccessingSecurityScopedResource()
                             }
                         case .failure(let failure):
                             print(failure)
